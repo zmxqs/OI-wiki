@@ -7,6 +7,132 @@ author: Ir1d, CBW2007, ChungZH, xhn16729, Xeonacid, tptpp, hsfzLZH1, ouuan, Tris
 3.  计算最优解；
 4.  利用计算出的信息构造一个最优解。
 
+## 从斐波那契开始
+
+斐波那契的通项公式是：
+
+$$F_i=
+\begin{cases}
+1 , i \leq 2 \\
+F_{i-1} + F_{i-2} , i \geq 3 \\
+\end {cases}
+$$
+
+这个数列的前几个为： $ 1 , 1 , 2 , 3 , 5 , 8 , 13 , 21, 34 , 55 \cdots$
+
+我们发现，用朴素的搜索：
+
+```cpp
+typedef long long ll;
+const ll MOD=1e9+7;
+ll F(int n) {
+	if(n<=2) return 1;
+	return (F(n-1)+F(n-2))%MOD;
+}
+```
+
+测试发现： $n = 40$ 都很难通过，但 $n = 50$ 就无能为力了。
+
+那么，这样一个 **看似** $O (n) $ 的算法，为什么却达到了指数级呢？
+
+我们来稍微修改一下，看看 $F_2$ 这一项被反复访问了多少次。
+
+```cpp
+#pragma GCC optimize(2)
+#include<bits/stdc++.h>
+using namespace std;
+
+inline int read(){char ch=getchar();int f=1;while(ch<'0' || ch>'9') {if(ch=='-') f=-f; ch=getchar();}
+	int x=0;while(ch>='0' && ch<='9') x=(x<<3)+(x<<1)+ch-'0',ch=getchar();return x*f;}
+
+typedef long long ll;
+const ll MOD=1e9+7; 
+ll s=0; 
+ll F(int n) {
+	if(n==3) s++;
+	if(n<=2) return 1;
+	return (F(n-1)+F(n-2))%MOD;
+}
+
+int main(){
+	ll x=F(read()); printf("%lld\n",s);
+	return 0;
+}
+
+```
+
+最终发现，$F_2$ 被反复访问了 $ 63245986 $ 次。
+
+那么，这样的话，光 $F_2$ 就可以超时了。
+
+问题在于：一个 $F_i$ 可能已经被求出，但以后反复地调用，每次又要重新计算，带来大量的时间；如果记录下答案呢？
+
+这时 **记忆化搜索** 诞生了。
+
+用 $f$ 数组记录值。每次如果有值直接返回：
+
+```cpp
+#pragma GCC optimize(2)
+#include<bits/stdc++.h>
+using namespace std;
+
+inline int read(){char ch=getchar();int f=1;while(ch<'0' || ch>'9') {if(ch=='-') f=-f; ch=getchar();}
+	int x=0;while(ch>='0' && ch<='9') x=(x<<3)+(x<<1)+ch-'0',ch=getchar();return x*f;}
+
+typedef long long ll;
+const ll MOD=1e9+7; 
+ll s=0,f[10000001]; 
+ll F(int n) {
+//	if(n==2) s++;
+	if(f[n]) return f[n];
+	if(n<=2) f[n]=1;
+	else f[n]=(F(n-1)+F(n-2))%MOD;
+	return f[n];
+}
+
+int main(){
+	ll x=F(read()); printf("%lld\n",x);
+	return 0;
+}
+
+```
+
+你会发现，即使输入 $10^7$ 也没有什么问题了。这说明这是 $O(n)$ 的，也就是线性的。
+
+我们进一步发现：每次求 $F_i$ 的时候，所有的 $F_j (j < i)$ 都已经求出，不必再递归，这是因为 `dp` 的一个重要性质：
+
+要满足求一个东西的时候，它所依赖的东西必须先求出。
+
+比方说求 $F_i$ 的时候，要保证 $F_{i-1}$ 和 $F_{i-2}$ 已经求出。这是显然的。
+
+所以，我们去掉递归，改为：
+
+```cpp
+#pragma GCC optimize(2)
+#include<bits/stdc++.h>
+using namespace std;
+
+inline int read(){char ch=getchar();int f=1;while(ch<'0' || ch>'9') {if(ch=='-') f=-f; ch=getchar();}
+	int x=0;while(ch>='0' && ch<='9') x=(x<<3)+(x<<1)+ch-'0',ch=getchar();return x*f;}
+
+typedef long long ll;
+const ll MOD=1e9+7; 
+ll f[10000001]; 
+
+int main(){
+	int n=read();
+	f[1]=f[2]=1;
+	for(int i=3;i<=n;i++) f[i]=(f[i-1]+f[i-2])%MOD;
+	printf("%d\n",f[n]);
+	return 0;
+}
+
+```
+
+这样，我们实现了从搜索到动态规划的一个跨越。
+
+下面来看几道典型的例题。
+
 ## 钢条切割
 
 给定一段钢条，和不同长度的价格，问如何切割使得总价格最大。
